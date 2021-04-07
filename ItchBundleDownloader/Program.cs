@@ -114,7 +114,7 @@ namespace ItchBundleDownloader
             Console.WriteLine("Setup complete. Press enter to start claiming...");
             Console.ReadLine();
             
-            ItchBundleInterface itchBundleInterface = new DummyBundleInterface(bundleUrl, browserInterface);
+            ItchBundleInterface itchBundleInterface = new ItchBundleInterface(bundleUrl, browserInterface);
             itchBundleInterface.SetupExclusions(excludedGenres.ToArray(), toExcludeSplit);
             
             itchBundleInterface.GoToPage(1);
