@@ -8,12 +8,7 @@ namespace ItchBundleDownloader
 {
     public class BrowserInterface
     {
-        private IWebDriver driver;
-        
-        protected BrowserInterface(IWebDriver driver)
-        {
-            this.driver = driver;
-        }
+        protected IWebDriver driver;
 
         public void Navigate(string url)
         {

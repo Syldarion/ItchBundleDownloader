@@ -12,7 +12,6 @@ namespace ItchBundleDownloader
         private BrowserInterface browserRef;
 
         private int currentPage;
-        private int currentRow;
 
         private List<IWebElement> currentPageGameRowElements;
         private int gameRowElementsCount;

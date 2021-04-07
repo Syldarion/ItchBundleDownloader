@@ -8,9 +8,8 @@ namespace ItchBundleDownloader
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-
             Console.WriteLine("Itch Bundle Claimer v0.1");
+            Console.WriteLine("========================");
             Console.WriteLine("Choose your browser: 1. Chrome, 2. Firefox");
 
             string browserInputStr = Console.ReadLine();
@@ -22,19 +21,29 @@ namespace ItchBundleDownloader
             }
 
             BrowserInterface browserInterface;
-            
-            switch (browserInput)
+
+            try
             {
-                case 1:
-                    browserInterface = new ChromeInterface();
-                    break;
-                case 2:
-                    browserInterface = new FirefoxInterface();
-                    break;
-                default:
-                    return;
+                switch (browserInput)
+                {
+                    case 1:
+                        browserInterface = new ChromeInterface();
+                        break;
+                    case 2:
+                        browserInterface = new FirefoxInterface();
+                        break;
+                    default:
+                        return;
+                }
             }
-            
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to build browser interface: {e.Message}");
+                Console.WriteLine("Press enter to exit...");
+                Console.ReadLine();
+                return;
+            }
+
             browserInterface.Navigate("https://itch.io/");
             Console.WriteLine("Log in to Itch and hit enter to continue...");
             Console.ReadLine();
