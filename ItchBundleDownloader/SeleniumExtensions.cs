@@ -5,11 +5,11 @@ namespace ItchBundleDownloader
 {
     public static class SeleniumExtensions
     {
-        public static bool TryFindElementByClass(this IWebElement element, string className, out IWebElement result)
+        public static bool TryFindElement(this IWebElement element, By selector, out IWebElement result)
         {
             try
             {
-                result = element.FindElement(By.ClassName(className));
+                result = element.FindElement(selector);
                 return true;
             }
             catch (NoSuchElementException e)

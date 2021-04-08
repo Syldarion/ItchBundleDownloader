@@ -9,75 +9,39 @@ namespace ItchBundleDownloader
     public class ItchBundleInterface
     {
         private string bundleRootUrl;
-        private BrowserInterface browserRef;
+        private BrowserInterface browserInterface;
 
         private int currentPage;
 
         private List<IWebElement> currentPageGameRowElements;
         private int gameRowElementsCount;
 
-        private string[] excludedGenres;
-        private string[] excludedTags;
-
-        public ItchBundleInterface(string rootUrl, BrowserInterface browserRef)
+        public ItchBundleInterface(string rootUrl)
         {
             bundleRootUrl = rootUrl;
-            this.browserRef = browserRef;
+            browserInterface = BrowserInterface.Build();
         }
 
         #region public
 
-        public void SetupExclusions(string[] excludedGenres, string[] excludedTags)
+        public void Start()
         {
-            this.excludedGenres = excludedGenres.Select(x => x.ToLower().Trim()).ToArray();
-            this.excludedTags = excludedTags.Select(x => x.ToLower().Trim()).ToArray();
-        }
-        
-        public void GoToPage(int page)
-        {
-            string pageUrl = $"{bundleRootUrl}?page={page}";
-            browserRef.Navigate(pageUrl);
-            browserRef.WaitForElementByClass("game_list");
-            currentPage = page;
-            currentPageGameRowElements = GetPageGameElements();
-            gameRowElementsCount = currentPageGameRowElements.Count;
-        }
+            Console.WriteLine("Navigating to Itch...");
+            browserInterface.Navigate("https://itch.io");
+            Console.WriteLine("Log in and press enter to begin claiming.");
+            Console.ReadLine();
 
-        public bool GoToNextPage()
-        {
-            IWebElement pager = browserRef.FindElementByClass("pager");
-            IWebElement next_page_button;
-            
-            if (pager.TryFindElementByClass("next_page", out next_page_button))
+            GoToPage(1);
+            ClaimCurrentPage();
+
+            while (GoToNextPage())
             {
-                //this is silly to do rather than click the button
-                //but it works, and this whole thing is a mess anyways
-                GoToPage(currentPage + 1);
-                return true;
+                ClaimCurrentPage();
             }
 
-            return false;
+            browserInterface.Close();
         }
-        
-        public void ClaimCurrentPage()
-        {
-            for (int i = 0; i < gameRowElementsCount; i++)
-            {
-                if (IsGameClaimed(currentPageGameRowElements[i]))
-                {
-                    Console.WriteLine($"Already claimed {GetGameNameFromRow(currentPageGameRowElements[i])}");
-                }
-                else if (IsGameExcluded(currentPageGameRowElements[i]))
-                {
-                    Console.WriteLine($"Excluding {GetGameNameFromRow(currentPageGameRowElements[i])}");
-                }
-                else 
-                {
-                    ClaimGame(currentPageGameRowElements[i]);
-                }
-            }
-        }
-        
+
         #endregion
 
         #region protected
@@ -103,79 +67,114 @@ namespace ItchBundleDownloader
 
         #region private
 
+        private void GoToPage(int page)
+        {
+            string pageUrl = $"{bundleRootUrl}?page={page}";
+            browserInterface.Navigate(pageUrl);
+            browserInterface.WaitForElement(By.ClassName("game_list"));
+            currentPage = page;
+            currentPageGameRowElements = GetPageGameElements();
+            gameRowElementsCount = currentPageGameRowElements.Count;
+        }
+
+        private bool GoToNextPage()
+        {
+            IWebElement pager = browserInterface.FindElementByClass("pager");
+
+            if (pager.TryFindElement(By.ClassName("next_page"), out IWebElement _))
+            {
+                //this is silly to do rather than click the button
+                //but it works, and this whole thing is a mess anyways
+                GoToPage(currentPage + 1);
+                return true;
+            }
+
+            return false;
+        }
+        
+        private void ClaimCurrentPage()
+        {
+            for (int i = 0; i < gameRowElementsCount; i++)
+            {
+                if (IsGameClaimed(currentPageGameRowElements[i]))
+                {
+                    Console.WriteLine($"Already claimed {GetGameNameFromRow(currentPageGameRowElements[i])}");
+                }
+                else if (IsGameExcluded(currentPageGameRowElements[i]))
+                {
+                    Console.WriteLine($"Excluding {GetGameNameFromRow(currentPageGameRowElements[i])}");
+                }
+                else if(HasClaimButton(currentPageGameRowElements[i]))
+                {
+                    ClaimGame(currentPageGameRowElements[i]);
+                }
+            }
+        }
+        
+        private bool HasClaimButton(IWebElement gameRowElement)
+        {
+            IWebElement buttonRowElement = gameRowElement.FindElement(By.ClassName("button_row"));
+            IWebElement downloadButtonElement;
+            return buttonRowElement.TryFindElement(By.Name("action"), out downloadButtonElement);
+        }
+        
         private bool IsGameExcluded(IWebElement gameRowElement)
         {
             string gameUrl = GetGameUrl(gameRowElement);
-            browserRef.Navigate(gameUrl);
-            IWebElement infoPanelElement = browserRef.WaitForElementByClass("game_info_panel_widget");
 
-            List<IWebElement> infoRows = infoPanelElement.FindElements(By.TagName("tr")).ToList();
-            IWebElement genreCell = null;
-            IWebElement tagsCell = null;
+            GamePageInterface gamePageInterface = new GamePageInterface(gameUrl, browserInterface);
+            GamePageInfo gameInfo;
+            bool retrievalSuccess = gamePageInterface.GetPageInfo(out gameInfo);
 
-            foreach (IWebElement infoRow in infoRows)
-            {
-                List<IWebElement> rowCells = infoRow.FindElements(By.TagName("td")).ToList();
-                IWebElement rowNameCell = rowCells[0];
-                string rowNameText = rowNameCell.GetAttribute("textContent");
-                if (rowNameText == "Genre")
-                {
-                    genreCell = rowCells[1];
-                }
-                else if (rowNameText == "Tags")
-                {
-                    tagsCell = rowCells[1];
-                }
-            }
-
-            string genreText = string.Empty;
-            string tagsText = string.Empty;
-
-            if (genreCell != null)
-            {
-                genreText = genreCell.GetAttribute("textContent").ToLower();
-            }
-
-            if (tagsCell != null)
-            {
-                tagsText = tagsCell.GetAttribute("textContent").ToLower();
-            }
-
-            bool isExcluded = false;
-
-            string[] genresSplit = genreText.Split(',');
-
-            foreach (string genre in genresSplit)
-            {
-                if (excludedGenres.Contains(genre.Trim()))
-                {
-                    isExcluded = true;
-                }
-            }
-            
-            string[] tagsSplit = tagsText.Split(',');
-
-            foreach (string tag in tagsSplit)
-            {
-                if (excludedTags.Contains(tag.Trim()))
-                {
-                    isExcluded = true;
-                }
-            }
-            
             GoToPage(currentPage);
 
-            return isExcluded;
+            if (retrievalSuccess == false)
+            {
+                return true;
+            }
+
+            if (gameInfo.aggregateRating < Config.Active.MinimumRating)
+            {
+                return true;
+            }
+
+            if (gameInfo.ratingCount < Config.Active.MinimumRatingCount)
+            {
+                return true;
+            }
+            
+            if (Config.Active.IsCategoryExcluded(gameInfo.category))
+            {
+                return true;
+            }
+            
+            foreach (string genre in gameInfo.genres)
+            {
+                if (Config.Active.IsGenreExcluded(genre))
+                {
+                    return true;
+                }
+            }
+
+            foreach (string tag in gameInfo.tags)
+            {
+                if (Config.Active.IsTagExcluded(tag))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void WaitForClaimPage()
         {
-            browserRef.WaitForElementByClass("game_download_page");
+            browserInterface.WaitForElement(By.ClassName("game_download_page"));
         }
 
         private List<IWebElement> GetPageGameElements()
         {
-            IWebElement mainElement = browserRef.FindElementByClass("main");
+            IWebElement mainElement = browserInterface.FindElementByClass("main");
             IWebElement innerColumnElement = mainElement.FindElement(By.ClassName("inner_column"));
             IWebElement gameListElement = innerColumnElement.FindElement(By.ClassName("game_list"));
 
@@ -185,8 +184,7 @@ namespace ItchBundleDownloader
         private bool IsGameClaimed(IWebElement gameRowElement)
         {
             IWebElement buttonRowElement = gameRowElement.FindElement(By.ClassName("button_row"));
-
-            return buttonRowElement.TryFindElementByClass("game_download_btn", out IWebElement downloadButtonElement);
+            return buttonRowElement.TryFindElement(By.ClassName("game_download_btn"), out IWebElement _);
         }
 
         private void ClickClaimButton(IWebElement gameRowElement)

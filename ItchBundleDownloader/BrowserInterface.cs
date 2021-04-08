@@ -8,8 +8,34 @@ namespace ItchBundleDownloader
 {
     public class BrowserInterface
     {
+        public enum Type
+        {
+            Chrome,
+            Firefox
+        }
+        
+        private static Type activeBrowserType;
+        
         protected IWebDriver driver;
 
+        public static void SetBrowserType(Type type)
+        {
+            activeBrowserType = type;
+        }
+
+        public static BrowserInterface Build()
+        {
+            switch (activeBrowserType)
+            {
+                case Type.Chrome:
+                    return new ChromeInterface();
+                case Type.Firefox:
+                    return new FirefoxInterface();
+                default:
+                    throw new Exception($"Invalid activeBrowserType set: {activeBrowserType}");
+            }
+        }
+        
         public void Navigate(string url)
         {
             driver.Url = url;
@@ -40,10 +66,19 @@ namespace ItchBundleDownloader
             return driver.FindElements(By.Id(id)).ToList();
         }
 
-        public IWebElement WaitForElementByClass(string className)
+        public IWebElement WaitForElement(By selector)
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-            return wait.Until(x => x.FindElement(By.ClassName(className)));
+
+            try
+            {
+                IWebElement foundElement = wait.Until(x => x.FindElement(selector));
+                return foundElement;
+            }
+            catch (WebDriverTimeoutException e)
+            {
+                return null;
+            }
         }
     }
 }

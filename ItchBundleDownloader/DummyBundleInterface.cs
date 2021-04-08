@@ -5,8 +5,7 @@ namespace ItchBundleDownloader
 {
     public class DummyBundleInterface : ItchBundleInterface
     {
-        public DummyBundleInterface(string rootUrl, BrowserInterface browserRef) 
-            : base(rootUrl, browserRef)
+        public DummyBundleInterface(string rootUrl) : base(rootUrl)
         {
             
         }
