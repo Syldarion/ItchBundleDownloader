@@ -24,14 +24,14 @@ namespace ItchBundleDownloader
 
         #region public
 
-        public void Start()
+        public void Start(int startPage)
         {
             Console.WriteLine("Navigating to Itch...");
             browserInterface.Navigate("https://itch.io");
             Console.WriteLine("Log in and press enter to begin claiming.");
             Console.ReadLine();
 
-            GoToPage(1);
+            GoToPage(startPage);
             ClaimCurrentPage();
 
             while (GoToNextPage())

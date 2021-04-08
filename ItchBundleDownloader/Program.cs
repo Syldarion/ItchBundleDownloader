@@ -53,7 +53,7 @@ namespace ItchBundleDownloader
                 itchBundleInterface = new ItchBundleInterface(bundleUrl);
             }
 
-            itchBundleInterface.Start();
+            itchBundleInterface.Start(Config.Active.StartPage);
 
             Console.WriteLine("Finished claiming. Press enter to exit...");
             Console.ReadLine();
@@ -74,6 +74,7 @@ namespace ItchBundleDownloader
                 Console.WriteLine($"3. Excluded Tags: {Config.Active.ExcludedTagsToString()}");
                 Console.WriteLine($"4. Minimum Aggregate Rating: {Config.Active.MinimumRating}");
                 Console.WriteLine($"5. Minimum Rating Count: {Config.Active.MinimumRatingCount}");
+                Console.WriteLine($"6. Start Page: {Config.Active.StartPage}");
 
                 Console.Write("Enter option to modify (or 0 to continue): ");
                 string input = Console.ReadLine();
@@ -102,6 +103,9 @@ namespace ItchBundleDownloader
                         break;
                     case 5:
                         DisplayMinimumRatingCountMenu();
+                        break;
+                    case 6:
+                        DisplayStartPageMenu();
                         break;
                 }
             }
@@ -252,6 +256,17 @@ namespace ItchBundleDownloader
             if (int.TryParse(input, out inputValue))
             {
                 Config.Active.MinimumRatingCount = inputValue;
+            }
+        }
+
+        static void DisplayStartPageMenu()
+        {
+            Console.Write("Enter new starting page: ");
+            string input = Console.ReadLine();
+            int inputValue;
+            if (int.TryParse(input, out inputValue))
+            {
+                Config.Active.StartPage = inputValue;
             }
         }
     }

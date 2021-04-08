@@ -36,9 +36,18 @@ namespace ItchBundleDownloader
             }
         }
         
-        public void Navigate(string url)
+        public bool Navigate(string url)
         {
-            driver.Url = url;
+            try
+            {
+                driver.Url = url;
+                return true;
+            }
+            catch (WebDriverException e)
+            {
+                Console.WriteLine($"Page load error: {e.Message}");
+                return false;
+            }
         }
 
         public void Close()

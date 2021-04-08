@@ -15,6 +15,8 @@ namespace ItchBundleDownloader
         public float MinimumRating { get; set; }
 
         public int MinimumRatingCount { get; set; }
+        
+        public int StartPage { get; set; }
 
         private Dictionary<string, bool> genreExclusions;
         private Dictionary<string, bool> categoryExclusions;
@@ -29,6 +31,7 @@ namespace ItchBundleDownloader
             defaultConfig.tagExclusions = new List<string>();
             defaultConfig.MinimumRating = 0.0f;
             defaultConfig.MinimumRatingCount = 0;
+            defaultConfig.StartPage = 1;
 
             return defaultConfig;
         }

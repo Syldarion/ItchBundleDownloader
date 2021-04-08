@@ -23,9 +23,6 @@ namespace ItchBundleDownloader
         /// <returns>True if the information was retrieved, otherwise False.</returns>
         public bool GetPageInfo(out GamePageInfo info)
         {
-            browserInterface.Navigate(gameUrl);
-            IWebElement infoElement = browserInterface.WaitForElement(By.ClassName("game_info_panel_widget"));
-
             info = new GamePageInfo()
             {
                 aggregateRating = 0.0f,
@@ -34,6 +31,13 @@ namespace ItchBundleDownloader
                 ratingCount = 0,
                 tags = new string[] { }
             };
+            
+            if (browserInterface.Navigate(gameUrl) == false)
+            {  
+                return false;
+            }
+            
+            IWebElement infoElement = browserInterface.WaitForElement(By.ClassName("game_info_panel_widget"));
             
             if (infoElement == null)
             {
